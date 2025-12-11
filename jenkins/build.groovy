@@ -59,7 +59,7 @@ pipeline {
         }
 
         stage('Containerize') {
-            steps {
+            steps { 
                 withCredentials([usernamePassword(credentialsId: 'nexus-deploy', usernameVariable: 'DOCKER_USR', passwordVariable: 'DOCKER_PSW')]) {
                     sh '''
                         echo "[INFO] Deploying JAR to Nexus Maven..."
