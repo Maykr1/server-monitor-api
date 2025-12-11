@@ -65,17 +65,20 @@ pipeline {
                             -DaltSnapshotDeploymentRepository=nexus-snapshots::default::$SNAPSHOT_REPO
 
                         echo "[INFO] Building Docker Image..."
-                        echo "${DOCKER_PSW}" | docker login "${DOCKER_BASE}" -u "$DOCKER_USR" --password-stdin
-                        
-                        mvn -B -ntp \
-                            -Ddocker.base="${DOCKER_BASE}" \
-                            -Dapp.name="${APP_NAME}" \
-                            -Dbuild.tag="${BUILD_TAG}" \
-                            dockerfile:build dockerfile:tag dockerfile:push
+                        IMAGE="${DOCKER_BASE}/$APP_NAME:$BUILD_TAG"
 
+                        docker build \
+                            --build-arg JAR_FILE=target/${APP_NAME}-0.0.1-SNAPSHOT.jar \
+                            -t "$IMAGE" .
+                        docker tag "$IMAGE" "${DOCKER_BASE}/${APP_NAME}:latest"
+
+                        echo "[INFO] Pushing Docker image to Nexus Docker..."
+                        echo "${DOCKER_PSW}" | docker login "${DOCKER_BASE}" -u "$DOCKER_USR" --password-stdin
+                        docker push "$IMAGE"
+                        docker push "${DOCKER_BASE}/$APP_NAME:latest"
                         docker logout "${DOCKER_BASE}"
 
-                        echo "[INFO] Pushed image: ${DOCKER_BASE}/${APP_NAME}:${BUILD_TAG}"
+                        echo "[INFO] Pushed: ${IMAGE}"
                         '''
                 }
             }
