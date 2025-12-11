@@ -70,7 +70,7 @@ pipeline {
                         IMAGE="${DOCKER_BASE}/$APP_NAME:$BUILD_TAG"
 
                         docker build \
-                            --build-arg JAR_FILE=target/ToDoList2-0.0.1-SNAPSHOT.jar \
+                            --build-arg JAR_FILE=target/${APP_NAME}-0.0.1-SNAPSHOT.jar \
                             -t "$IMAGE" .
                         docker tag "$IMAGE" "${DOCKER_BASE}/${APP_NAME}:latest"
 
