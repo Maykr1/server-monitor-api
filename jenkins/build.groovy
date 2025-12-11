@@ -22,7 +22,6 @@ pipeline {
     stages {
         stage('Checkout Repo') {
             steps {
-                githubNotify context: 'build', status: 'PENDING', description: 'Build started'
                 checkout scm
             }
         }
@@ -90,11 +89,9 @@ pipeline {
 
     post {
         success {
-            githubNotify context: 'build', status: 'SUCCESS', description: 'Build passed'
             echo 'Build complete ✅' 
         }
         failure {
-            githubNotify context: 'build', status: 'FAILURE', description: 'Build failed'
             echo 'Build failed ❌' 
         }
     }
