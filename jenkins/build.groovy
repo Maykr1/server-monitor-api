@@ -1,3 +1,5 @@
+@Library('shared-jenkins-library')
+
 pipeline {
     // --- SETUP ---
     agent any
@@ -27,60 +29,25 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh 'mvn -B clean test'
+                testApp('maven')
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn -B -DskipTests package'
+                buildApp('maven')
             }
         }
 
         stage('SonarQube') {
             steps {
-                withSonarQubeEnv('sonar-local') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn -B -ntp sonar:sonar \
-                                -Dsonar.projectKey=$APP_NAME \
-                                -Dsonar.projectName="$APP_NAME" \
-                                -Dsonar.token=$SONAR_TOKEN \
-                            '''
-                    }
-                }
-
-                timeout(time:10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+                sonarApp('maven', APP_NAME)
             }
         }
 
         stage('Containerize') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-deploy', usernameVariable: 'DOCKER_USR', passwordVariable: 'DOCKER_PSW')]) {
-                    sh '''
-                        echo "[INFO] Deploying JAR to Nexus Maven..."
-                        mvn -B -ntp -DskipTests deploy \
-                            -DaltSnapshotDeploymentRepository=nexus-snapshots::default::$SNAPSHOT_REPO
-
-                        echo "[INFO] Building Docker Image..."
-                        IMAGE="${DOCKER_BASE}/$APP_NAME:$BUILD_TAG"
-
-                        docker build \
-                            --build-arg JAR_FILE=target/${APP_NAME}-0.0.1-SNAPSHOT.jar \
-                            -t "$IMAGE" .
-                        docker tag "$IMAGE" "${DOCKER_BASE}/${APP_NAME}:latest"
-
-                        echo "[INFO] Pushing Docker image to Nexus Docker..."
-                        echo "${DOCKER_PSW}" | docker login "${DOCKER_BASE}" -u "$DOCKER_USR" --password-stdin
-                        docker push "$IMAGE"
-                        docker push "${DOCKER_BASE}/$APP_NAME:latest"
-                        docker logout "${DOCKER_BASE}"
-
-                        echo "[INFO] Pushed: ${IMAGE}"
-                        '''
-                }
+                containerizeApp('maven', APP_NAME, SNAPSHOT_REPO, DOCKER_BASE, BUILD_TAG)
             }
         }
     }

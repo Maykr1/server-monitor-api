@@ -1,3 +1,5 @@
+@Library('shared-jenkins-library')
+
 pipeline {
     agent any
     options { timestamps() }
@@ -26,52 +28,23 @@ pipeline {
     stages {
         stage('Login to Registry') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.REG_CRED_ID, usernameVariable: 'DOCKER_USR', passwordVariable: 'DOCKER_PSW')]) {
-                    sh '''
-                        echo "[INFO] Logging into Docker registry ${DOCKER_REG}..."
-                        echo "${DOCKER_PSW}" | docker login "${DOCKER_REG}" -u "${DOCKER_USR}" --password-stdin
-                    '''
-                }
+                login(REG_CRED_ID, DOCKER_REG)
             }
         }
 
         stage('Deploy latest image') {
             steps {
-                sh '''
-                    echo "[INFO] Deploying ${IMAGE}"
-
-                    cd "${COMPOSE_DIR}"
-                    TSP_TAG="${IMAGE_TAG}" docker compose pull ${APP_NAME}
-                    TSP_TAG="${IMAGE_TAG}" docker compose up -d --no-build --remove-orphans ${APP_NAME}
-                '''
+                deploy(IMAGE, COMPOSE_DIR, IMAGE_TAG, APP_NAME)
             }
         }
 
         stage('Cleanup') {
             when { expression { env.PRUNE_MODE != 'none' } }
-            steps {
-                sh '''
-                    echo "[INFO] Prune mode: ${PRUNE_MODE}"
-
-                    if [ "${PRUNE_MODE}" = "all" ]; then
-                        docker system prune -a
-                    elif [ "${PRUNE_MODE}" = "dangling" ]; then
-                        docker image prune -f
-                        docker container prune -f
-                        docker network prune -f
-                    else 
-                        echo "[INFO] Nothing to prune."
-                    fi
-                '''
-            }
+            cleanupServer(PRUNE_MODE)
         }
 
         stage('Logout') {
-            steps{
-                sh '''
-                    docker logout "${DOCKER_REG}" || true
-                '''
-            }
+            logout(DOCKER_REG)
         }
         
     }
