@@ -12,7 +12,6 @@ pipeline {
         // --- MAVEN ---
         NEXUS           = credentials('nexus-deploy')
         NEXUS_BASE      = "https://nexus.ethansclark.com"
-        RELEASE_REPO    = "${NEXUS_BASE}/repository/maven-releases/"
         SNAPSHOT_REPO   = "${NEXUS_BASE}/repository/maven-snapshots/"
 
         // --- DOCKER ---
@@ -63,14 +62,13 @@ pipeline {
                     sh '''
                         echo "[INFO] Deploying JAR to Nexus Maven..."
                         mvn -B -ntp -DskipTests deploy \
-                            -DaltReleaseDeploymentRepository=nexus-releases::default::$RELEASE_REPO \
                             -DaltSnapshotDeploymentRepository=nexus-snapshots::default::$SNAPSHOT_REPO
 
                         echo "[INFO] Building Docker Image..."
                         IMAGE="${DOCKER_BASE}/$APP_NAME:$BUILD_TAG"
 
                         docker build \
-                            --build-arg JAR_FILE=target/${APP_NAME}-0.0.1-SNAPSHOT.jar \
+                            --build-arg JAR_FILE=target/${APP_NAME}.jar \
                             -t "$IMAGE" .
                         docker tag "$IMAGE" "${DOCKER_BASE}/${APP_NAME}:latest"
 
