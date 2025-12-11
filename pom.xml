@@ -32,7 +32,10 @@
 		<jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
 		<sonar.junit.reportPaths>${project.build.directory}/surefire-reports</sonar.junit.reportPaths>
 		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/coverage-reports/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-		<sonar.exclusions></sonar.exclusions>
+		<sonar.exclusions>
+			src/main/java/com/eclark/server_monitor_api/ServerMonitorApiApplication.java,
+			src/main/java/com/eclark/server_monitor_api/ServerMonitorApiApplicationTests.java
+		</sonar.exclusions>
 	</properties>
 	<dependencies>
 		<dependency>
