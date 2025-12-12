@@ -3,7 +3,7 @@
 pipeline {
     // --- SETUP ---
     agent any
-    options { timestamps() }
+    options { timestamps(); disableConcurrentBuilds() }
     tools { maven 'maven-3.9.11' }
 
     environment {
@@ -16,17 +16,22 @@ pipeline {
         NEXUS_BASE          = "https://nexus.ethansclark.com"
         SNAPSHOT_REPO_ID    = "maven-snapshots"
         SNAPSHOT_REPO       = "${NEXUS_BASE}/repository/${SNAPSHOT_REPO_ID}/"
-        RELEASE_REPO_ID = "maven-releases"
-        RELEASE_REPO    = "${NEXUS_BASE}/repository/${RELEASE_REPO_ID}/"
+        RELEASE_REPO_ID     = "maven-releases"
+        RELEASE_REPO        = "${NEXUS_BASE}/repository/${RELEASE_REPO_ID}/"
 
         // --- DOCKER ---
         DOCKER_BASE     = "localhost:8003"
     }
 
     parameters {
+        booleanParam(
+            name: 'RELEASE', 
+            defaultValue: false, 
+            description: 'Publish Maven release (main only)'
+        )
         choice(
             name: 'BUMP VERSION',
-            choices: ['PATCH', 'MINOR', 'MAJOR'],\
+            choices: ['PATCH', 'MINOR', 'MAJOR'],
             description: 'Release bump A.B.C: PATCH->C, MAJOR_CHANGE->B, APP_CHANGE->A'
         )
     }
@@ -66,6 +71,7 @@ pipeline {
             when {
                 allOf {
                     branch 'main'
+                    expression { params.RELEASE }
                     not { changeRequest() }
                 }
             }
