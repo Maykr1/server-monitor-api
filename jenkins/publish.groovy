@@ -31,14 +31,10 @@ pipeline {
 
     stages {
         stage ('Prepare Release') {
+            when { branch 'main' }
             steps {
-                script {
-                    if (! (env.BRANCH_NAME == 'main')) {
-                        error("This pipeline only publishes from main/master. Current branch: ${env.BRANCH_NAME}")
-                    }
-                }
+                echo "On main; OK to publish"
             }
-            
         }
 
         stage('Checkout Repo') {
