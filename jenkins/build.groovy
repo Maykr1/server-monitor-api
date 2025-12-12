@@ -61,7 +61,8 @@ pipeline {
             }
         }
 
-        stage('Containerize') {
+        stage('Publish Snapshot') {
+            when { expression { !params.RELEASE } }
             steps {
                 containerizeApp('maven', APP_NAME, SNAPSHOT_REPO, DOCKER_BASE, BUILD_TAG)
             }
