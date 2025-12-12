@@ -33,7 +33,7 @@ pipeline {
         stage ('Prepare Release') {
             steps {
                 script {
-                    if (! (env.BRANCH_NAME in ['main','master'])) {
+                    if (! (env.BRANCH_NAME == 'main')) {
                         error("This pipeline only publishes from main/master. Current branch: ${env.BRANCH_NAME}")
                     }
                 }
