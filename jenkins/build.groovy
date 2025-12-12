@@ -12,9 +12,10 @@ pipeline {
         BUILD_TAG = "${env.BUILD_NUMBER}"
 
         // --- MAVEN ---
-        NEXUS           = credentials('nexus-deploy')
-        NEXUS_BASE      = "https://nexus.ethansclark.com"
-        SNAPSHOT_REPO   = "${NEXUS_BASE}/repository/maven-snapshots/"
+        NEXUS               = credentials('nexus-deploy')
+        NEXUS_BASE          = "https://nexus.ethansclark.com"
+        SNAPSHOT_REPO_ID    = "maven-snapshots"
+        SNAPSHOT_REPO       = "${NEXUS_BASE}/repository/${SNAPSHOT_REPO_ID}/"
 
         // --- DOCKER ---
         DOCKER_BASE     = "localhost:8003"
