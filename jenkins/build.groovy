@@ -91,8 +91,6 @@ pipeline {
 
                     echo "[INFO] Maven coordinates: ${groupId}:${artifactId}"
 
-                    // - nexusLatestReleaseVersion(groupId, artifactId) -> returns latest or null
-                    // - bumpVersion(latest, bump) -> returns 1.0.0 if latest is null
                     def latest = nexusLatestReleaseVersion(groupId, artifactId)
                     def next   = bumpVersion(latest, params.BUMP)
 
@@ -100,13 +98,7 @@ pipeline {
                     echo "[INFO] Latest release: ${latest ?: '(none)'} -> Next release: ${env.RELEASE_VERSION}"
                 }
 
-                sh """
-                    mvn -B -q versions:set \
-                        -DnewVersion=${RELEASE_VERSION} \
-                        -DgenerateBackupPoms=false
-                    """
-
-                // Publish to releases
+                setReleaseVersion('maven', RELEASE_VERSION)
                 containerizeApp('maven', APP_NAME, RELEASE_REPO, DOCKER_BASE, RELEASE_VERSION)
             }
         }
