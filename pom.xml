@@ -33,6 +33,7 @@
 		<sonar.junit.reportPaths>${project.build.directory}/surefire-reports</sonar.junit.reportPaths>
 		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/coverage-reports/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.exclusions>
+			src/main/java/com/eclark/server_monitor_api/config/**,
 			src/main/java/com/eclark/server_monitor_api/ServerMonitorApiApplication.java,
 			src/main/java/com/eclark/server_monitor_api/ServerMonitorApiApplicationTests.java
 		</sonar.exclusions>
@@ -46,7 +47,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -56,6 +56,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<version>5.5.1</version>
 		</dependency>
 	</dependencies>
 
