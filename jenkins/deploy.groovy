@@ -12,7 +12,7 @@ pipeline {
         COMPOSE_DIR     = '/deploy'
         DOCKER_REG      = 'localhost:8003'
         DOCKER_REPO     = 'repository/docker-apps'
-        
+
         IMAGE_TAG       = "${params.COMMIT_ID ?: 'latest'}"
         IMAGE           = "${DOCKER_REG}/${APP_NAME}:${IMAGE_TAG}"
 
@@ -20,7 +20,7 @@ pipeline {
         PRUNE_MODE      = "${params.PRUNE_MODE ?: 'none'}"
     }
 
-    parameters{
+    parameters {
         string(
             name: 'COMMIT_ID',
             defaultValue: 'latest',
@@ -35,23 +35,27 @@ pipeline {
     stages {
         stage('Login to Registry') {
             steps {
-                login(REG_CRED_ID, DOCKER_REG)
+                login(env.REG_CRED_ID, env.DOCKER_REG)
             }
         }
 
         stage('Deploy latest image') {
             steps {
-                deployApp(IMAGE, COMPOSE_DIR, IMAGE_TAG, APP_NAME)
+                deployApp(env.IMAGE, env.COMPOSE_DIR, env.IMAGE_TAG, env.APP_NAME)
             }
         }
 
         stage('Cleanup') {
             when { expression { env.PRUNE_MODE != 'none' } }
-            cleanupServer(PRUNE_MODE)
+            steps {
+                cleanupServer(env.PRUNE_MODE)
+            }
         }
 
         stage('Logout') {
-            logout(DOCKER_REG)
+            steps {
+                logout(env.DOCKER_REG)
+            }
         }
         
     }
