@@ -9,7 +9,6 @@ pipeline {
     environment {
         // --- APP ---
         APP_NAME = "server-monitor-api"
-        BUILD_TAG = "${env.BUILD_NUMBER}"
 
         // --- MAVEN ---
         NEXUS               = credentials('nexus-deploy')
@@ -30,7 +29,7 @@ pipeline {
             description: 'Publish Maven release (main only)'
         )
         choice(
-            name: 'BUMP VERSION',
+            name: 'BUMP',
             choices: ['PATCH', 'MINOR', 'MAJOR'],
             description: 'Release bump A.B.C: PATCH->C, MAJOR_CHANGE->B, APP_CHANGE->A'
         )
@@ -62,9 +61,27 @@ pipeline {
         }
 
         stage('Publish Snapshot') {
-            when { expression { !params.RELEASE } }
+            when { 
+                allOf {
+                    expression { !params.RELEASE }
+                    not { changeRequest() }
+                } 
+            }
             steps {
-                containerizeApp('maven', APP_NAME, SNAPSHOT_REPO, DOCKER_BASE, BUILD_TAG)
+                script {
+                    def branch = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                    def sha    = (env.GIT_COMMIT ?: sh(script: "git rev-parse HEAD", returnStdout: true).trim()).take(7)
+
+                    def safeBranch = branch.replaceAll(/[^0-9A-Za-z.\-]/, "-")
+
+                    env.COMMIT_ID  = sha
+                    env.SNAPSHOT_VERSION = "${safeBranch}-${sha}-SNAPSHOT"
+
+                    echo "[INFO] Publishing snapshot version: ${env.SNAPSHOT_VERSION}"
+                }
+
+                setVersion('maven', SNAPSHOT_VERSION)
+                containerizeApp('maven', APP_NAME, SNAPSHOT_REPO, DOCKER_BASE, COMMIT_ID)
             }
         }
 
@@ -98,7 +115,7 @@ pipeline {
                     echo "[INFO] Latest release: ${latest ?: '(none)'} -> Next release: ${env.RELEASE_VERSION}"
                 }
 
-                setReleaseVersion('maven', RELEASE_VERSION)
+                setVersion('maven', RELEASE_VERSION)
                 containerizeApp('maven', APP_NAME, RELEASE_REPO, DOCKER_BASE, RELEASE_VERSION)
             }
         }
