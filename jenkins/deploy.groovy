@@ -12,13 +12,20 @@ pipeline {
         COMPOSE_DIR     = '/deploy'
         DOCKER_REG      = 'localhost:8003'
         DOCKER_REPO     = 'repository/docker-apps'
-        IMAGE_TAG       = 'latest'
+        
+        IMAGE_TAG       = "${params.COMMIT_ID ?: 'latest'}"
         IMAGE           = "${DOCKER_REG}/${APP_NAME}:${IMAGE_TAG}"
+
         REG_CRED_ID     = 'nexus-deploy'
         PRUNE_MODE      = "${params.PRUNE_MODE ?: 'none'}"
     }
 
     parameters{
+        string(
+            name: 'COMMIT_ID',
+            defaultValue: 'latest',
+            description: 'Git commit ID to deploy (branch, tag, or sha)'
+        )
         choice(name: 'PRUNE_MODE',
             choices: ['none', 'dangling', 'all'],
             description: 'Choose how aggressively to prune docker containers, volumes, etc.'
@@ -34,7 +41,7 @@ pipeline {
 
         stage('Deploy latest image') {
             steps {
-                deploy(IMAGE, COMPOSE_DIR, IMAGE_TAG, APP_NAME)
+                deployApp(IMAGE, COMPOSE_DIR, IMAGE_TAG, APP_NAME)
             }
         }
 

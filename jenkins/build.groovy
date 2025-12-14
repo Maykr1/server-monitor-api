@@ -69,19 +69,11 @@ pipeline {
             }
             steps {
                 script {
-                    def branch = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-                    def sha    = (env.GIT_COMMIT ?: sh(script: "git rev-parse HEAD", returnStdout: true).trim()).take(7)
-
-                    def safeBranch = branch.replaceAll(/[^0-9A-Za-z.\-]/, "-")
-
-                    env.COMMIT_ID  = sha
-                    env.SNAPSHOT_VERSION = "${safeBranch}-${sha}-SNAPSHOT"
-
-                    echo "[INFO] Publishing snapshot version: ${env.SNAPSHOT_VERSION}"
+                    env.SNAPSHOT_VERSION = getSnapshotVersion()
                 }
 
-                setVersion('maven', SNAPSHOT_VERSION)
-                containerizeApp('maven', APP_NAME, SNAPSHOT_REPO, DOCKER_BASE, COMMIT_ID)
+                setVersion('maven', env.SNAPSHOT_VERSION)
+                containerizeApp('maven', APP_NAME, SNAPSHOT_REPO, DOCKER_BASE, env.COMMIT_ID) // env.COMMIT_ID is set inside of getSnapshotVersion()
             }
         }
 
@@ -96,27 +88,11 @@ pipeline {
 
             steps {
                 script {
-                    def groupId = sh(
-                        script: "mvn -q -DforceStdout help:evaluate -Dexpression=project.groupId",
-                        returnStdout: true
-                    ).trim()
-
-                    def artifactId = sh(
-                        script: "mvn -q -DforceStdout help:evaluate -Dexpression=project.artifactId",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "[INFO] Maven coordinates: ${groupId}:${artifactId}"
-
-                    def latest = nexusLatestReleaseVersion(groupId, artifactId)
-                    def next   = bumpVersion(latest, params.BUMP)
-
-                    env.RELEASE_VERSION = next
-                    echo "[INFO] Latest release: ${latest ?: '(none)'} -> Next release: ${env.RELEASE_VERSION}"
+                    env.RELEASE_VERSION = getReleaseVersion('maven', params.BUMP)
                 }
 
-                setVersion('maven', RELEASE_VERSION)
-                containerizeApp('maven', APP_NAME, RELEASE_REPO, DOCKER_BASE, RELEASE_VERSION)
+                setVersion('maven', env.RELEASE_VERSION)
+                containerizeApp('maven', APP_NAME, RELEASE_REPO, DOCKER_BASE, env.RELEASE_VERSION)
             }
         }
     }
