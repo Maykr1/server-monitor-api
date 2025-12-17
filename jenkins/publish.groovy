@@ -1,3 +1,5 @@
+@Library('shared-jenkins-library') _
+
 pipeline {
     // --- SETUP ---
     agent any
